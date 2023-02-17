@@ -32,7 +32,7 @@ from . import TransportType, ImageType
 # ==================================================================================================
 
 class Publisher():
-    def __init__(self, topic_uri: str, queue_size: int = 3, image_type: str = ImageType.BGR8) -> None:
+    def __init__(self, topic_uri: str, queue_size: int = 3) -> None:
         """
         Initialize a new publisher that will generate all ROS publisher corresponding to each
         TransportType available.
@@ -46,21 +46,23 @@ class Publisher():
                 Function callback that will be call each time ImageTransport receive an image
             queue_size : int (default=3)
                 Topic queue size
-            image_type : str (default=ImageType.BGR8)
-                Image type, look at image_transport.Imagetype for more option ('bgr8','rgb8',...)
         Return
         ------
             None
         """
         self._topic_uri  = topic_uri
-        self._image_type = image_type
         self._publishers = []
         for type_name in TransportType.get_types():
             transport = TransportType.get(type_name)
+
+            topic_full_uri = f'{topic_uri}/image/{type_name}'
+            if type_name == 'image_raw':
+                topic_full_uri = f'{topic_uri}/image'
+
             self._publishers.append((
                 transport,
                 rospy.Publisher(
-                    f'{topic_uri}/image/{type_name}',
+                    topic_full_uri,
                     transport.get_message_type(),
                     queue_size=queue_size
                 )
@@ -80,4 +82,4 @@ class Publisher():
         """
         for transport, pub in self._publishers:
             if pub.get_num_connections() > 0:
-                pub.publish(transport.write_message(image, self._image_type))
+                pub.publish(transport.write_message(image))

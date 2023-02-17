@@ -21,6 +21,7 @@
 
 import rospy
 from typing import Callable
+from inspect import signature
 
 from . import TransportType, ImageType
 
@@ -30,8 +31,7 @@ from . import TransportType, ImageType
 
 class Subscriber():
 
-    def __init__(self, topic_uri : str, callback: Callable, queue_size : int = 3,
-        transport_type_name : str = 'compressed', image_type : str = ImageType.BGR8) -> None:
+    def __init__(self, topic_uri : str, callback: Callable, queue_size : int = 3, image_type : str = ImageType.BGR8) -> None:
         """
         Create a new subscriber
 
@@ -41,11 +41,12 @@ class Subscriber():
                 Image topic name (eg: 'camera' will automaticly search for topic named
                 'camera/image/raw_image' or 'camera/image/compressed')
             callback: Callable
-                Function callback that will be call each time ImageTransport receive an image
+                Function callback that will be call each time ImageTransport receive an image.
+                Note : You can pass two type of callback :
+                    - function(image)                 | Retreive only the image
+                    - function(image, message_header) | In case if you need header information
             queue_size : int (default=3)
                 Topic queue size
-            transport_type_name : str (default='compressed')
-                Transport type name that correspond to his uri end (eg:'compressed','image_raw',...)
             image_type : str (default=ImageType.BGR8)
                 Image type, look at image_transport.Imagetype for more option ('bgr8','rgb8',...)
         Return
@@ -55,11 +56,12 @@ class Subscriber():
         self._topic_uri     = topic_uri
         self._queue_size    = queue_size
         self._user_callback = callback
+        self._add_header    = len(signature(callback).parameters) == 2
         self._image_type    = image_type
-        self._transport     = TransportType.get(transport_type_name)
+        self._transport     = TransportType.get(topic_uri.split('/')[-1])
 
         rospy.Subscriber(
-            name       = f'{topic_uri}/image/{transport_type_name}',
+            name       = topic_uri,
             data_class = self._transport.get_message_type(),
             callback   = self._callback,
             queue_size = queue_size
@@ -71,4 +73,8 @@ class Subscriber():
         according the to selected image transport and call the user callback.
         """
         image = self._transport.read_message(message, self._image_type)
-        self._user_callback(image)
+
+        if self._add_header:
+            self._user_callback(image, message.header)
+        else:
+            self._user_callback(image)

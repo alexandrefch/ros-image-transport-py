@@ -1,9 +1,4 @@
-cmake_minimum_required(VERSION 2.8.3)
-
-if (POLICY CMP0048)
-  cmake_policy(SET CMP0048 NEW)
-endif (POLICY CMP0048)
-
+cmake_minimum_required(VERSION 3.0.2)
 project(image_transport_py)
 
 find_package(
@@ -17,7 +12,7 @@ find_package(
 
 catkin_python_setup()
 
-file(GLOB python_scripts_DIR
+file(GLOB PYTHON_SCRITPS_DIR
 	"src/*.py"
 )
 
@@ -26,6 +21,6 @@ catkin_package(
 )
 
 catkin_install_python(
-	PROGRAMS ${python_scripts_DIR}
+	PROGRAMS ${PYTHON_SCRITPS_DIR}
 	DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )

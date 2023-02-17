@@ -2,14 +2,12 @@
 
 # ROS Image Transport Python
 
-
 ![Ros](https://img.shields.io/badge/Ros-Noetic-green?style=for-the-badge&logo=ROS)
 ![Python](https://img.shields.io/badge/Python-3.8-green?style=for-the-badge&logo=Python&logoColor=FFFFFF)
 
 </div>
 
 This ROS package aim to give the same facility of use of image topic as [image_transport](http://wiki.ros.org/image_transport) can does in c++. Moreover, this package is compatible with [image_transport](http://wiki.ros.org/image_transport), that mean that you can communicate to existing node that use image transport in c++. (Like [rqt](http://wiki.ros.org/rqt) or [RViz](http://wiki.ros.org/rviz))
-
 
 ## :rocket: Getting Started
 
@@ -37,29 +35,30 @@ catkin build image_transport_py
 # Publisher example
 
 import rospy
-from image_transport import ImageTransport
+from image_transport.ImageTransport import ImageTransport
 
 rospy.init_node("my_node_publisher")
-publisher = ImageTransport.advertise("my_topic")
+publisher = ImageTransport.advertise("my_topic/image")
 publisher.publish(image)
 ```
 
 </font>
 
-Calling the function `ImageTransport.advertise()` will lead to the instantiation of an object `image_transport.Publisher` that will automaticly generate all supported transport type topic as below. (eg: rostopic list using `ImageTransport.advertise("my_topic")`)
+Calling the function `ImageTransport.advertise()` will lead to the instantiation of an object `image_transport.Publisher` that will automaticly generate all supported transport type topic as below. (eg: rostopic list using `ImageTransport.advertise("my_topic/image")`)
 
 <font size=2>
 
 ```txt
+my_topic/image
 my_topic/image/compressed
-my_topic/image/image_raw
 ```
 
 </font>
 
 **Subscriber**
 
-Same as above, here if you want for example subscribe to the topic named `my_topic/image/image_raw` inside `rostopic list`, simply use `my_topic` inside the function `ImageTransport.subscribe` and choose `image_raw` type like in example below. (By default the subscriber will subscribe to the `compressed` topic)
+Now if you want to subscribe you simply need create call `ImageTransport.subscribe` and choose your desire format topic, the library will detect what type is it using topic name and pick the correct image decoder.
+(eg : if you want to subscribe to a compressed topic simply use `ImageTransport.subscribe("my_topic/image/compressed",callback)`)
 
 <font size=2>
 
@@ -67,13 +66,13 @@ Same as above, here if you want for example subscribe to the topic named `my_top
 # Subscriber example
 
 import rospy
-from image_transport import ImageTransport
+from image_transport.ImageTransport import ImageTransport
 
 def callback(image):
     print(f"receive image of shape {image.shape}")
 
 rospy.init_node("my_node_subscriber")
-ImageTransport.subscribe("my_topic",callback,3,'image_raw')
+ImageTransport.subscribe("my_topic/image/compressed",callback)
 ```
 
 </font>

@@ -22,6 +22,7 @@ and TransportType.Compressed to see how to implement it.
 # ==================================================================================================
 
 import importlib.util
+import rospy
 import numpy
 import os
 import sys
@@ -108,7 +109,10 @@ class TransportType():
         ------
             image_transport.TransportType
         """
-        return cls.get_instance()._type_dict[type_name]
+        if type_name in cls.get_instance()._type_dict:
+            return cls.get_instance()._type_dict[type_name]
+        else:
+            return cls.get_instance()._type_dict['image_raw']
 
     def read_message(self, message : any, image_type : str = ImageType.BGR8) -> numpy.ndarray:
         """
@@ -127,7 +131,7 @@ class TransportType():
         """
         raise NotImplementedError()
 
-    def write_message(self, image : numpy.ndarray, image_type : str = ImageType.BGR8) -> any:
+    def write_message(self, image : numpy.ndarray) -> any:
         """
         Child class function that need to be implemented, it will read an incoming image and
         return it's corresponding message according to the transport type.
@@ -136,8 +140,6 @@ class TransportType():
         ----------
             image : numpy.ndarray
                 Numpy image (same as OpenCv::Mat, no need to convert) that need to be convert
-            image_type : str (default=ImageType.BGR8)
-                Image type, look at image_transport.Imagetype for more option ('bgr8','rgb8',...)
         Return
         ------
             any

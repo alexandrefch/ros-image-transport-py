@@ -34,22 +34,18 @@ class ImageTransport():
     """
 
     @staticmethod
-    def subscribe(topic_uri: str, callback: Callable, queue_size: int = 3,
-        transport_type_name : str = 'compressed', image_type: str = ImageType.BGR8):
+    def subscribe(topic_uri: str, callback: Callable, queue_size: int = 3, image_type: str = ImageType.BGR8):
         """
         Create a new subscriber
 
         Parameters
         ----------
             topic_uri : str
-                Image topic name (eg: 'camera' will automaticly search for topic named
-                'camera/image/raw_image' or 'camera/image/compressed')
+                Image topic name
             callback: Callable
                 Function callback that will be call each time ImageTransport receive an image
             queue_size : int (default=3)
                 Topic queue size
-            transport_type_name : str (default='compressed')
-                Transport type name that correspond to his uri end (eg:'compressed','image_raw',...)
             image_type : str (default=ImageType.BGR8)
                 Image type, look at image_transport.Imagetype for more option ('bgr8','rgb8',...)
         Return
@@ -57,15 +53,14 @@ class ImageTransport():
             image_transport.Subscriber
         """
         return Subscriber(
-            topic_uri           = topic_uri,
+            topic_uri           = ImageTransport.filter_uri(topic_uri),
             callback            = callback,
             queue_size          = queue_size,
-            transport_type_name = transport_type_name,
             image_type          = image_type
         )
 
     @staticmethod
-    def advertise(topic_uri: str, queue_size: int = 3, image_type: str = ImageType.BGR8) -> Publisher:
+    def advertise(topic_uri: str, queue_size: int = 3) -> Publisher:
         """
         Create a new publisher
 
@@ -76,14 +71,15 @@ class ImageTransport():
                 'camera/image/raw' and 'camera/image/compressed')
             queue_size : int (default=3)
                 Topic queue size
-            image_type : str (default=ImageType.BGR8)
-                Image type, look at image_transport.Imagetype for more option ('bgr8','rgb8',...)
         Return
         ------
             image_transport.Publisher
         """
         return Publisher(
-            topic_uri  = topic_uri,
-            queue_size = queue_size,
-            image_type = image_type
+            topic_uri  = ImageTransport.filter_uri(topic_uri),
+            queue_size = queue_size
         )
+
+    @staticmethod
+    def filter_uri(uri:str):
+        return uri.lstrip('/').rstrip('/')

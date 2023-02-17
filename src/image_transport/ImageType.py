@@ -24,3 +24,10 @@ class ImageType():
     RGB8  = 'rgb8'
     BGR8  = 'bgr8'
     MONO8 = 'mono8'
+
+    @classmethod
+    def get_channel_count(cls, type:str) -> int:
+        if type in [cls.RGB8, cls.BGR8]:
+            return 3
+        if type in [cls.MONO8]:
+            return 1

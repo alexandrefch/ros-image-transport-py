@@ -51,7 +51,7 @@ class Compressed(TransportType):
             numpy.ndarray
         """
         buffer = np.frombuffer(message.data,dtype=np.uint8)
-        flag   = cv.IMREAD_GRAYSCALE if image_type == ImageType.BGR8 else cv.IMREAD_COLOR
+        flag   = cv.IMREAD_GRAYSCALE if image_type == ImageType.MONO8 else cv.IMREAD_COLOR
         image  = cv.imdecode(buffer, flag)
 
         if image_type == ImageType.RGB8:
@@ -59,7 +59,7 @@ class Compressed(TransportType):
 
         return image
 
-    def write_message(self, image : np.ndarray, image_type : str = ImageType.BGR8) -> CompressedImage:
+    def write_message(self, image : np.ndarray) -> CompressedImage:
         """
         Read an incoming image and return it's corresponding message.
 
@@ -67,8 +67,6 @@ class Compressed(TransportType):
         ----------
             image : numpy.ndarray
                 Numpy image (same as OpenCv::Mat, no need to convert) that need to be convert
-            image_type : str (default=ImageType.BGR8)
-                Image type, look at image_transport.Imagetype for more option ('bgr8','rgb8',...)
         Return
         ------
             CompressedImage

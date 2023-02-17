@@ -20,9 +20,9 @@ ImageRaw TransportType, use sensor_msgs.msg.Image message to send image over ROS
 #                                          I M P O R T S
 # ==================================================================================================
 
-from cv_bridge import CvBridge
 import numpy as np
 import rospy
+import cv2 as cv
 from sensor_msgs.msg import Image
 
 from image_transport import TransportType, ImageType
@@ -33,8 +33,6 @@ from image_transport import TransportType, ImageType
 
 class ImageRaw(TransportType):
 
-    _BRIDGE    = CvBridge()
-
     topic_uri = 'image_raw'
 
     def read_message(self, message : Image, image_type : str = ImageType.BGR8) -> np.ndarray:
@@ -44,14 +42,24 @@ class ImageRaw(TransportType):
         Parameters
         ----------
             message : Image
-                Name of the transport type (eg:'compressed')
+                ROS message to decode
             image_type : str (default=ImageType.BGR8)
                 Image type, look at image_transport.Imagetype for more option ('bgr8','rgb8',...)
         Return
         ------
             numpy.ndarray
         """
-        image = ImageRaw._BRIDGE.imgmsg_to_cv2(message, image_type)
+
+        channel = ImageType.get_channel_count(image_type)
+        height  = message.height
+        width   = message.width
+
+        buffer  = np.frombuffer(message.data,dtype=np.uint8)
+        image   = np.reshape(buffer,(height, width, channel))
+        
+        if image_type == ImageType.RGB8:
+            image = cv.cvtColor(image, cv.COLOR_BGR2RGB)
+
         return image
 
     def write_message(self, image : np.ndarray, image_type : str = ImageType.BGR8) -> Image:
@@ -68,16 +76,18 @@ class ImageRaw(TransportType):
         ------
             Image
         """
-        chanel = 1 if image_type == ImageType.MONO8 else 3
+        channel = ImageType.get_channel_count(image_type)
+        height  = image.shape[0]
+        width   = image.shape[1]
 
         msg = Image()
         msg.header.stamp = rospy.Time.now()
-        msg.height       = image.shape[0]
-        msg.width        = image.shape[1]
+        msg.height       = height
+        msg.width        = width
         msg.encoding     = image_type
         msg.is_bigendian = False
-        msg.step         = msg.width * chanel
-        msg.data         = np.reshape(image,(msg.height*msg.width*chanel)).tolist()
+        msg.step         = msg.width * channel
+        msg.data         = np.reshape(image, (height*width*channel)).tolist()
         return msg
 
     def get_message_type(self) -> type:
