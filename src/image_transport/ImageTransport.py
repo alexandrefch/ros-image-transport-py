@@ -60,7 +60,7 @@ class ImageTransport():
         )
 
     @staticmethod
-    def advertise(topic_uri: str, queue_size: int = 3) -> Publisher:
+    def advertise(topic_uri: str, image_type: str = ImageType.BGR8, queue_size: int = 3) -> Publisher:
         """
         Create a new publisher
 
@@ -69,6 +69,9 @@ class ImageTransport():
             topic_uri : str
                 Image topic name (eg: 'camera' will automaticly create topic named
                 'camera/image/raw' and 'camera/image/compressed')
+            image_type : str (default=ImageType.BGR8)
+                Your image type, look at image_transport.Imagetype for more option ('bgr8','rgb8',...)
+                Allow the publisher to convert to RGB format.
             queue_size : int (default=3)
                 Topic queue size
         Return
@@ -77,6 +80,7 @@ class ImageTransport():
         """
         return Publisher(
             topic_uri  = ImageTransport.filter_uri(topic_uri),
+            image_type = image_type,
             queue_size = queue_size
         )
 

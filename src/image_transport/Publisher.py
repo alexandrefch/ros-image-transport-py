@@ -24,6 +24,7 @@ eg: topic_uri='my_topic' will lead to 'my_topic/image/raw_image' and
 
 import numpy as np
 import rospy
+import cv2 as cv
 
 from . import TransportType, ImageType
 
@@ -32,7 +33,7 @@ from . import TransportType, ImageType
 # ==================================================================================================
 
 class Publisher():
-    def __init__(self, topic_uri: str, queue_size: int = 3) -> None:
+    def __init__(self, topic_uri: str, image_type: str = ImageType.BGR8, queue_size: int = 3) -> None:
         """
         Initialize a new publisher that will generate all ROS publisher corresponding to each
         TransportType available.
@@ -42,8 +43,9 @@ class Publisher():
             topic_uri : str
                 Image topic name (eg: 'camera' will automaticly search for topic named
                 'camera/image/raw_image' or 'camera/image/compressed')
-            callback: Callable
-                Function callback that will be call each time ImageTransport receive an image
+            image_type : str (default=ImageType.BGR8)
+                Your image type, look at image_transport.Imagetype for more option ('bgr8','rgb8',...)
+                Allow the publisher to convert to RGB format.
             queue_size : int (default=3)
                 Topic queue size
         Return
@@ -51,6 +53,7 @@ class Publisher():
             None
         """
         self._topic_uri  = topic_uri
+        self._image_type = image_type
         self._publishers = []
         for type_name in TransportType.get_types():
             transport = TransportType.get(type_name)
@@ -80,6 +83,9 @@ class Publisher():
         ------
             None
         """
+        if self._image_type == ImageType.BGR8:
+            image = cv.cvtColor(image, cv.COLOR_BGR2RGB)
+
         for transport, pub in self._publishers:
             if pub.get_num_connections() > 0:
                 pub.publish(transport.write_message(image))
