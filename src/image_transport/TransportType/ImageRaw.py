@@ -22,10 +22,10 @@ ImageRaw TransportType, use sensor_msgs.msg.Image message to send image over ROS
 
 import numpy as np
 import rospy
-import cv2 as cv
 from sensor_msgs.msg import Image
 
-from image_transport import TransportType, ImageType
+from image_transport.TransportType import TransportType
+from image_transport.ImageType import ImageType
 
 # ==================================================================================================
 #                                             C O D E
@@ -35,7 +35,7 @@ class ImageRaw(TransportType):
 
     topic_uri = 'image_raw'
 
-    def read_message(self, message : Image, image_type : str = ImageType.BGR8) -> np.ndarray:
+    def read_message(self, message : Image, image_type : str = ImageType.BGR8) -> Image:
         """
         Read an incoming message and return it's corresponding image.
 
@@ -43,24 +43,12 @@ class ImageRaw(TransportType):
         ----------
             message : Image
                 ROS message to decode
-            image_type : str (default=ImageType.BGR8)
-                Image type, look at image_transport.Imagetype for more option ('bgr8','rgb8',...)
         Return
         ------
-            numpy.ndarray
+            sensor_msgs.msg.Image
         """
 
-        channel = ImageType.get_channel_count(image_type)
-        height  = message.height
-        width   = message.width
-
-        buffer  = np.frombuffer(message.data,dtype=np.uint8)
-        image   = np.reshape(buffer,(height, width, channel))
-        
-        if image_type == ImageType.RGB8:
-            image = cv.cvtColor(image, cv.COLOR_BGR2RGB)
-
-        return image
+        return message
 
     def write_message(self, image : np.ndarray, image_type : str = ImageType.BGR8) -> Image:
         """

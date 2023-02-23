@@ -21,7 +21,7 @@
 
 import rospy
 from typing import Callable
-from inspect import signature
+import message_filters
 
 from . import TransportType, ImageType
 
@@ -29,9 +29,9 @@ from . import TransportType, ImageType
 #                                             C O D E
 # ==================================================================================================
 
-class Subscriber():
+class Subscriber(message_filters.SimpleFilter):
 
-    def __init__(self, topic_uri : str, callback: Callable, queue_size : int = 3, image_type : str = ImageType.BGR8) -> None:
+    def __init__(self, topic_uri : str, callback: 'None | Callable' = None, queue_size : int = 3, image_type : str = ImageType.BGR8) -> None:
         """
         Create a new subscriber
 
@@ -53,10 +53,11 @@ class Subscriber():
         ------
             image_transport.Subscriber
         """
+        message_filters.SimpleFilter.__init__(self)
+
         self._topic_uri     = topic_uri
         self._queue_size    = queue_size
         self._user_callback = callback
-        self._add_header    = len(signature(callback).parameters) == 2
         self._image_type    = image_type
         self._transport     = TransportType.get(topic_uri.split('/')[-1])
 
@@ -72,9 +73,14 @@ class Subscriber():
         Function call each time a new message is receive, it decode the image
         according the to selected image transport and call the user callback.
         """
-        image = self._transport.read_message(message, self._image_type)
+        message = self._transport.read_message(message, self._image_type)
+        if self._user_callback is not None:
+            self._user_callback(message)
+        self.signalMessage(message)
 
-        if self._add_header:
-            self._user_callback(image, message.header)
-        else:
-            self._user_callback(image)
+    def getTopic(self):
+        return self._topic_uri
+
+    def __getattr__(self, key):
+        """Serve same API as rospy.Subscriber"""
+        return self.sub.__getattribute__(key)

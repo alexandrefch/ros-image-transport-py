@@ -3,10 +3,10 @@
 import rospy
 import numpy as np
 import cv2 as cv
-from image_transport.ImageTransport import ImageTransport
+import image_transport
 
 rospy.init_node("my_node_pub")
-pub = ImageTransport.advertise("my_topic")
+pub = image_transport.Publisher("my_topic")
 
 img = np.zeros((64,64,3),dtype=np.uint8)
 img = cv.circle(

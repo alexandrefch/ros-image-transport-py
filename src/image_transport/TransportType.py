@@ -26,9 +26,10 @@ import rospy
 import numpy
 import os
 import sys
-from typing import List
+from typing import List, Any
 
 from . import ImageType
+from sensor_msgs.msg import Image
 
 # ==================================================================================================
 #                                             C O D E
@@ -64,8 +65,10 @@ class TransportType():
 
         for type_name in type_names:
             spec = importlib.util.spec_from_file_location(f"module.{type_name}", f"{file_path}/TransportType/{type_name}.py")
+            assert spec is not None
             module = importlib.util.module_from_spec(spec)
             sys.modules[f"module.{type_name}"] = module
+            assert spec.loader is not None
             spec.loader.exec_module(module)
             class_ = getattr(module, type_name)
             instance = class_()
@@ -83,6 +86,7 @@ class TransportType():
         """
         if TransportType._instance is None:
             TransportType.initalize()
+        assert cls._instance is not None
         return cls._instance
 
     @classmethod
@@ -114,7 +118,7 @@ class TransportType():
         else:
             return cls.get_instance()._type_dict['image_raw']
 
-    def read_message(self, message : any, image_type : str = ImageType.BGR8) -> numpy.ndarray:
+    def read_message(self, message : Any, image_type : str = ImageType.BGR8) -> Image:
         """
         Child class function that need to be implemented, it will read an incoming message and
         return it's corresponding image.
@@ -127,11 +131,11 @@ class TransportType():
                 Image type, look at image_transport.Imagetype for more option ('bgr8','rgb8',...)
         Return
         ------
-            numpy.ndarray
+            sensor_msgs.Image
         """
         raise NotImplementedError()
 
-    def write_message(self, image : numpy.ndarray) -> any:
+    def write_message(self, image : numpy.ndarray, image_type : str = ImageType.BGR8) -> Any:
         """
         Child class function that need to be implemented, it will read an incoming image and
         return it's corresponding message according to the transport type.

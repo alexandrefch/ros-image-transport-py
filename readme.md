@@ -7,7 +7,7 @@
 
 </div>
 
-This ROS package aim to give the same facility of use of image topic as [image_transport](http://wiki.ros.org/image_transport) can does in c++. Moreover, this package is compatible with [image_transport](http://wiki.ros.org/image_transport), that mean that you can communicate to existing node that use image transport in c++. (Like [rqt](http://wiki.ros.org/rqt) or [RViz](http://wiki.ros.org/rviz))
+This ROS package aim to give the same facility of use of image topic as [image_transport](http://wiki.ros.org/image_transport) can does in c++. Moreover, this package is compatible with [image_transport](http://wiki.ros.org/image_transport) and [message_filter](http://wiki.ros.org/message_filters), that mean that you can communicate to existing node that use image transport in c++. (Like [rqt](http://wiki.ros.org/rqt) or [RViz](http://wiki.ros.org/rviz))
 
 ## :rocket: Getting Started
 
@@ -35,16 +35,16 @@ catkin build image_transport_py
 # Publisher example
 
 import rospy
-from image_transport.ImageTransport import ImageTransport
+import image_transport
 
 rospy.init_node("my_node_publisher")
-publisher = ImageTransport.advertise("my_topic/image")
+publisher = image_transport.Publisher("my_topic/image")
 publisher.publish(image)
 ```
 
 </font>
 
-Calling the function `ImageTransport.advertise()` will lead to the instantiation of an object `image_transport.Publisher` that will automaticly generate all supported transport type topic as below. (eg: rostopic list using `ImageTransport.advertise("my_topic/image")`)
+Instantiation of a publisher object by calling  `image_transport.Publisher()` that will automaticly generate all supported transport type topic as below. (eg: rostopic list using `ImageTransport.advertise("my_topic/image")`)
 
 <font size=2>
 
@@ -57,8 +57,8 @@ my_topic/image/compressed
 
 **Subscriber**
 
-Now if you want to subscribe you simply need create call `ImageTransport.subscribe` and choose your desire format topic, the library will detect what type is it using topic name and pick the correct image decoder.
-(eg : if you want to subscribe to a compressed topic simply use `ImageTransport.subscribe("my_topic/image/compressed",callback)`)
+Now if you want to subscribe you simply need create call `image_transport.Subscriber` and choose your desire format topic, the library will detect what type is it using topic name and pick the correct image decoder.
+(eg : if you want to subscribe to a compressed topic simply use `image_transport.Subscriber("my_topic/image/compressed",callback)`)
 
 <font size=2>
 
@@ -66,13 +66,13 @@ Now if you want to subscribe you simply need create call `ImageTransport.subscri
 # Subscriber example
 
 import rospy
-from image_transport.ImageTransport import ImageTransport
+import image_transport
 
 def callback(image):
     print(f"receive image of shape {image.shape}")
 
 rospy.init_node("my_node_subscriber")
-ImageTransport.subscribe("my_topic/image/compressed",callback)
+image_transport.Subscriber("my_topic/image/compressed",callback)
 ```
 
 </font>
@@ -86,5 +86,34 @@ ImageTransport.subscribe("my_topic/image/compressed",callback)
 
 > **Note** <br>
 > If you want to help and add new transport type feel free to fork this project and make a merge request.
+
+</font>
+
+## Compatibility with message_filter
+
+<font size=2>
+
+```python
+import rospy
+import message_filters
+import image_transport
+from sensor_msgs.msg import PointCloud2
+
+def _callback(self,pcl,image):
+    print("Success !")
+
+rospy.init_node('Kitti')
+subscribers = [
+    message_filters.Subscriber('/pointcloud',PointCloud2),
+    image_transport.Subscriber('/my_camera_topic/image_raw')
+]
+mf = message_filters.ApproximateTimeSynchronizer(
+    subscribers,
+    queue_size=10,
+    slop=0.1
+)
+mf.registerCallback(self._callback)
+rospy.spin()
+```
 
 </font>

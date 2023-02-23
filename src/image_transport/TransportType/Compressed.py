@@ -24,9 +24,10 @@ image over ROS network.
 import cv2 as cv
 import numpy as np
 import rospy
-from sensor_msgs.msg import CompressedImage
+from sensor_msgs.msg import CompressedImage, Image
 
-from image_transport import TransportType, ImageType
+from image_transport.TransportType import TransportType
+from image_transport.ImageType import ImageType
 
 # ==================================================================================================
 #                                             C O D E
@@ -36,7 +37,7 @@ class Compressed(TransportType):
 
     topic_uri = 'compressed'
 
-    def read_message(self, message : CompressedImage, image_type : str = ImageType.BGR8) -> np.ndarray:
+    def read_message(self, message : CompressedImage, image_type : str = ImageType.BGR8) -> Image:
         """
         Read an incoming message and return it's corresponding image.
 
@@ -54,10 +55,17 @@ class Compressed(TransportType):
         flag   = cv.IMREAD_GRAYSCALE if image_type == ImageType.MONO8 else cv.IMREAD_COLOR
         image  = cv.imdecode(buffer, flag)
 
-        if image_type == ImageType.RGB8:
-            image = cv.cvtColor(image, cv.COLOR_BGR2RGB)
+        channel = ImageType.get_channel_count(image_type)
 
-        return image
+        msg = Image()
+        msg.header       = message.header
+        msg.height       = image.shape[0]
+        msg.width        = image.shape[1]
+        msg.encoding     = image_type
+        msg.is_bigendian = False
+        msg.step         = msg.width * channel
+        msg.data         = np.reshape(image, (msg.height*msg.width*channel)).tolist()
+        return msg
 
     def write_message(self, image : np.ndarray) -> CompressedImage:
         """

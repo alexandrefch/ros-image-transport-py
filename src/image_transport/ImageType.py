@@ -31,3 +31,4 @@ class ImageType():
             return 3
         if type in [cls.MONO8]:
             return 1
+        raise NotImplementedError(f"Cannot get channel count for type{type} !")
